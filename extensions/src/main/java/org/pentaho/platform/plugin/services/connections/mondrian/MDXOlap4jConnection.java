@@ -12,7 +12,7 @@
  * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
  * See the GNU Lesser General Public License for more details.
  *
- * Copyright (c) 2002-2016 Pentaho Corporation..  All rights reserved.
+ * Copyright (c) 2002-2017 Pentaho Corporation..  All rights reserved.
  */
 
 package org.pentaho.platform.plugin.services.connections.mondrian;
@@ -31,6 +31,7 @@ import org.apache.commons.logging.LogFactory;
 import org.olap4j.OlapConnection;
 import org.pentaho.commons.connection.IPentahoConnection;
 import org.pentaho.commons.connection.IPentahoResultSet;
+import org.pentaho.platform.engine.core.system.PentahoSessionHolder;
 import org.pentaho.platform.plugin.services.messages.Messages;
 
 /**
@@ -46,6 +47,7 @@ import org.pentaho.platform.plugin.services.messages.Messages;
 public class MDXOlap4jConnection implements IPentahoConnection {
 
   static final Log log = LogFactory.getLog( MDXOlap4jConnection.class );
+  public static final String PENTAHO_USER = "pentaho_user";
 
   /**
    * Underlying connection to OLAP system.
@@ -91,6 +93,7 @@ public class MDXOlap4jConnection implements IPentahoConnection {
       if ( url.startsWith( "jdbc:mondrian" ) ) {
         Util.PropertyList connectProperties = Util.parseConnectString( url );
         MDXConnection.mapPlatformRolesToMondrianRolesHelper( connectProperties );
+        marshalPentahoSessionToUrl( connectProperties );
         url = connectProperties.toString();
       }
 
@@ -118,6 +121,12 @@ public class MDXOlap4jConnection implements IPentahoConnection {
     }
 
     return true;
+  }
+
+  private void marshalPentahoSessionToUrl( Util.PropertyList connectProperties ) {
+    String pentahoSessionKey = RolapConnectionProperties.JdbcPropertyPrefix + PENTAHO_USER;//from props also nto only url
+    connectProperties.put( pentahoSessionKey,
+      connectProperties.get( pentahoSessionKey, PentahoSessionHolder.getSession().getName() ) );
   }
 
   /**
